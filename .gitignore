@@ -65,3 +65,5 @@ target/
 *.caffemodel
 *.json
 .DS_Store
+data/animes/*
+*.tfrecord
