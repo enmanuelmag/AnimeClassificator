@@ -67,3 +67,4 @@ target/
 .DS_Store
 data/animes/*
 *.tfrecord
+logs
