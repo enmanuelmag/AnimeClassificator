@@ -18,12 +18,13 @@ from utils.tf_functions import (
 EVA_INNER = 3
 SIZE_IMG = 224
 EVA_CLASS = 32
-EVA_UNITS = 1024
+EVA_UNITS = 2048 #2048 1024
 EVA_TYPE  = 'resnet'
 EVA_MODEL_CLASS = 32
+SUFIX = '_faces' if True else ''
 #Shape of vector result: (2048,)
 
-class_array_eva = pkl.load(open( f'./data/class_array_{EVA_CLASS}.pkl', 'rb'))
+class_array_eva = pkl.load(open(f'./data/class_array{"_faces" if True else ""}_{EVA_CLASS}.pkl', 'rb'))
 
 parmas_eval = {
   'units': EVA_UNITS,
@@ -34,7 +35,7 @@ parmas_eval = {
 }
 model_eva = AnimeClassifier(**parmas_eval)
 model_eva.build(input_shape=(None, *parmas_eval['input_shape']))
-PATH_BEST_EVA = f'./models/{EVA_TYPE}_{EVA_MODEL_CLASS}class_{EVA_UNITS}_units_{EVA_INNER}.h5'
+PATH_BEST_EVA = f'./models/{EVA_TYPE}_{EVA_MODEL_CLASS}class_{EVA_UNITS}_units_{EVA_INNER}{SUFIX}.h5'
 model_eva.load_weights(PATH_BEST_EVA)
 
 indexer_gpu, data_image, vector_images = load_image_embeddings(entire_db = True, factor = 16)
@@ -72,8 +73,13 @@ async def root():
 def predict(image: UploadFile = File(...)):
   print('===========================================')
   print(f'Image: {image.filename}')
-  
+
+  #save image on temp folder
+  #image_path = f'./temp/{image.filename}'
+  #with open(image_path, 'wb') as f:
+  #  f.write(image.file.read())
   image = process_image_tf(image.file, SIZE_IMG)
+  print(image.shape)
   data = search_result(image)
   return {
     'data': data

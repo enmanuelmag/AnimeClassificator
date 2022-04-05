@@ -10,8 +10,10 @@ from tensorflow.keras.applications.resnet_v2 import ResNet50V2
 from tensorflow.keras.applications.inception_v3 import InceptionV3
 
 SEED = 42
-LEN_TF_RECORD = 11753
-PATH_VECTORS = f'./data/data_image_{LEN_TF_RECORD}.pkl'
+#LEN_TF_RECORD = 11753
+LEN_TF_RECORD = 4007
+SUFIX = '_faces' if True else ''
+PATH_VECTORS = f'./data/data_image_{LEN_TF_RECORD}{SUFIX}.pkl'
 
 rd.seed(SEED)
 np.random.seed(SEED)
@@ -114,6 +116,8 @@ def load_image_embeddings(entire_db = False, factor = 16):
 
 def process_image_tf(image, size):
   print('Image byte', image)
+  #image = tf.io.read_file(image_path)
+  #image = tf.image.decode_jpeg(image, channels=3)
   image = Image.open(image).convert("RGB")
   #image = tf.image.decode_jpeg([ image ], channels=3)[0]
   image = tf.image.resize(image, (size, size))
