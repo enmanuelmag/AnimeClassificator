@@ -1,0 +1,1 @@
+uvicorn main:app --port 3001 --reload --host 192.168.100.37
