@@ -25,6 +25,7 @@ SUFIX = '_faces' if True else ''
 #Shape of vector result: (2048,)
 
 class_array_eva = pkl.load(open(f'./data/class_array{"_faces" if True else ""}_{EVA_CLASS}.pkl', 'rb'))
+print(class_array_eva)
 
 parmas_eval = {
   'units': EVA_UNITS,
@@ -83,4 +84,18 @@ def predict(image: UploadFile = File(...)):
   data = search_result(image)
   return {
     'data': data
+  }
+
+@app.post("/predict/name")
+def predict_name(image: UploadFile = File(...)):
+  print('===========================================')
+  print(f'Image: {image.filename}')
+
+  image = process_image_tf(image.file, SIZE_IMG)
+  print(image.shape)
+  result = model_eva.predict(np.array([image]))[0]
+  class_name = class_array_eva[np.argmax(result)]
+  print(f'Class: {class_name}', np.argmax(result))
+  return {
+    'data': class_name
   }
