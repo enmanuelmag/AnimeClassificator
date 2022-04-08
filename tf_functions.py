@@ -1,9 +1,11 @@
+import gc
 import faiss
 import numpy as np
 import random as rd
 import pickle as pkl
 import tensorflow as tf
 from PIL import Image, ImageFile
+from tensorflow.keras import backend as k
 from tensorflow.keras.applications.vgg19 import VGG19
 from keras.applications.imagenet_utils import preprocess_input
 from tensorflow.keras.applications.resnet_v2 import ResNet50V2
@@ -21,6 +23,11 @@ np.random.seed(SEED)
 tf.random.set_seed(SEED)
 tf.keras.utils.set_random_seed(SEED)
 
+
+class ReleaseMemory(tf.keras.callbacks.Callback):
+  def on_epoch_end(self, epoch, logs=None):
+    gc.collect()
+    k.clear_session()
 
 
 class AddPositionEmbs(layers.Layer):
