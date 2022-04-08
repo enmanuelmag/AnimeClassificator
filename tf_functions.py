@@ -49,22 +49,6 @@ def mlp_block_f(mlp_dim, inputs):
   x = layers.Dropout(0.1)(x)
   return x
 
-class MLPBlock(layers.Layer):
-  def __init__(self, mlp_dim, shape):
-    super(MLPBlock, self).__init__()
-    self.mlp_dim = mlp_dim
-    self.dense_1 = layers.Dense(units=mlp_dim, activation=tf.nn.gelu)
-    self.dropout_1 = layers.Dropout(0.1)
-    self.dense_2 = layers.Dense(units=shape[-1], activation=tf.nn.gelu)
-    self.dropout_2 = layers.Dropout(0.1)
-
-  def call(self, inputs):
-    x = self.dense_1(inputs)
-    x = self.dropout_1(x)
-    x = self.dense_2(x)
-    x = self.dropout_2(x)
-    return x
-
 def EncoderBlock(inputs, num_heads, mlp_dim):
   x = layers.LayerNormalization(dtype=inputs.dtype)(inputs)
   x = layers.MultiHeadAttention(num_heads=num_heads, key_dim=inputs.shape[-1], dropout=0.1)(x, x) 
@@ -156,7 +140,7 @@ class AnimeClassifier(tf.keras.Model):
       x = layer(x, training=training)
     return self.out_layer(x, training=training)
 
-  def predict_classes(self, x):
+  def predict_class(self, x):
     return tf.argmax(self(x), axis=1)
 
   def vectorize(self, x, flatten=True):

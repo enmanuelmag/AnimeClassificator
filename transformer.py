@@ -124,3 +124,14 @@ class ViTModel(tf.keras.Model):
     x = tf.reduce_mean(x, axis=1)
     x = self.logits(x)
     return x
+  
+  def predict_class(self, x):
+    return tf.argmax(self.call(x), axis=1)
+
+  def vectorize(self, x, reduce=True):
+    x = self.rescale_layer(x)
+    x = self.patch_conv_layer(x)
+    x = self.encoder(x)
+    if reduce:
+      return tf.reduce_mean(x, axis=1)
+    return x
