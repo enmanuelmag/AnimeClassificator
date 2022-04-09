@@ -101,7 +101,11 @@ def ViTModel(class_types, transformer_layers, patch_size, hidden_size, num_heads
   #  final part (mlp to classification)
   im_representation = tf.reduce_mean(encoder_out, axis=1)  # (1,) or (1,2)
 
-  logits = layers.Dense(units=class_types, name='Head', kernel_initializer=tf.keras.initializers.zeros)(im_representation) # !!! important !!! activation is linear 
+  logits = layers.Dense(
+    units=class_types,
+    name='Head'
+    kernel_initializer=tf.keras.initializers.zeros
+  )(im_representation) # !!! important !!! activation is linear 
   return tf.keras.Model(inputs=inputs, outputs=logits)
 
 

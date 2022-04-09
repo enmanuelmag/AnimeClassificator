@@ -18,6 +18,7 @@ class AddPositionEmbs(layers.Layer):
   def call(self, inputs, inputs_positions=None):
     # inputs.shape is (batch_size, seq_len, emb_dim).
     pos_embedding = tf.cast(self.pos_embedding, inputs.dtype)
+    #print('Inputs shape:', inputs.shape, 'Pos:', pos_embedding.shape)
     return inputs + pos_embedding
 
 class MLPBlock(layers.Layer):
@@ -106,7 +107,7 @@ class PatchConv(layers.Layer):
 class ViTModel(tf.keras.Model):
   def __init__(self, class_types, transformer_layers, patch_size, hidden_size, num_heads, mlp_dim, shape=(224, 224, 3)):
     super(ViTModel, self).__init__(name='ViTModel')
-    self.rescale_layer = layers.Rescaling(1./255, name='rescale_layer')
+    #self.rescale_layer = layers.Rescaling(1./255, name='rescale_layer')
     #self.rescale_layer = tf.keras.Sequential([layers.Rescaling(1./255, name='rescale_layer')])
     self.patch_conv_layer = PatchConv(patch_size, hidden_size)
     self.encoder = Encoder(transformer_layers, mlp_dim, num_heads)
@@ -124,7 +125,7 @@ class ViTModel(tf.keras.Model):
     result = self.out_layer(result) """
   
   def call(self, x):
-    x = self.rescale_layer(x)
+    #x = self.rescale_layer(x)
     x = self.patch_conv_layer(x)
     x = self.encoder(x)
     x = tf.math.reduce_mean(x, axis=1, name='reduce_mean')
@@ -135,12 +136,12 @@ class ViTModel(tf.keras.Model):
   def expand(self, input_shape):
     x = layers.Input(shape=input_shape[1:], name='inputs')
     return tf.keras.Model(inputs=[x], outputs=self.call(x))
-  
+
   def predict_class(self, x):
     return tf.argmax(self.call(x), axis=1)
 
   def vectorize(self, x, reduce=True):
-    x = self.rescale_layer(x)
+    #x = self.rescale_layer(x)
     x = self.patch_conv_layer(x)
     x = self.encoder(x)
     if reduce:
