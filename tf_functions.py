@@ -103,7 +103,7 @@ def ViTModel(class_types, transformer_layers, patch_size, hidden_size, num_heads
 
   logits = layers.Dense(
     units=class_types,
-    name='Head'
+    name='Head',
     kernel_initializer=tf.keras.initializers.zeros
   )(im_representation) # !!! important !!! activation is linear 
   return tf.keras.Model(inputs=inputs, outputs=logits)
