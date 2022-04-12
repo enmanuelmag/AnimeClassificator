@@ -63,6 +63,7 @@ class VitModel(keras.Model):
     self.num_heads = num_heads
     self.mlp_head_units = mlp_head_units
     self.dropout_rate = dropout_rate
+    self.transformer_layers = transformer_layers
 
     self.patches = Patches(patch_size)
     self.patch_encoder = PatchEncoder(num_patches, projection_dim)
@@ -85,7 +86,7 @@ class VitModel(keras.Model):
   def call(self, inputs, training=None):
     patches = self.patches(inputs)
     encoded_patches = self.patch_encoder(patches)
-    for i in range(self.num_heads):
+    for i in range(self.transformer_layers):
       x1 = getattr(self, f'norm_{i}')(encoded_patches)
       attention_output = getattr(self, f'multihead_{i}')(x1, x1)
       x2 = getattr(self, f'add_{i}')([attention_output, encoded_patches])
