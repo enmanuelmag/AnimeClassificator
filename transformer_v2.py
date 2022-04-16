@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+
 class MLP(layers.Layer):
   def __init__(self, hidden_units, dropout_rate, **kwargs):
     self.len_hidden_units = len(hidden_units)
@@ -53,7 +54,7 @@ class PatchEncoder(layers.Layer):
 class VitModel(keras.Model):
   def __init__(
     self, transformer_layers, patch_size, num_patches, projection_dim,
-    num_heads, mlp_head_units, num_classes, transformer_units, dropout_rate=0.1
+    num_heads, mlp_head_units, num_classes, transformer_units, dropout_rate=0.1, input_shape=None
   ):
     super(VitModel, self).__init__(name='VitModel')
     self.patch_size = patch_size
@@ -62,8 +63,21 @@ class VitModel(keras.Model):
     self.transformer_units = transformer_units
     self.num_heads = num_heads
     self.mlp_head_units = mlp_head_units
+    self.len_hidden_units = len(mlp_head_units)
     self.dropout_rate = dropout_rate
     self.transformer_layers = transformer_layers
+
+    self.data_augmentation = keras.Sequential(
+      [
+        layers.Normalization(),
+        layers.RandomFlip("horizontal"),
+        layers.RandomRotation(factor=0.02),
+        layers.RandomZoom(
+          height_factor=0.2, width_factor=0.2
+        ),
+      ],
+      name="data_augmentation",
+    )
 
     self.patches = Patches(patch_size)
     self.patch_encoder = PatchEncoder(num_patches, projection_dim)
@@ -77,13 +91,18 @@ class VitModel(keras.Model):
       setattr(self, f'encoded_patchs_{i}', layers.Add(name=f'encoded_patchs_{i}'))
 
     self.representation = layers.LayerNormalization(epsilon=1e-6, name='representation')
+    self.global_pooling = layers.GlobalAveragePooling1D(name='global_pooling')
     self.flatten = layers.Flatten(name='flatten_representation')
     self.drop_representation = layers.Dropout(0.5, name='dropout_representation')
 
-    self.features = MLP(mlp_head_units, dropout_rate=0.5, name='features')
+    for i, units in enumerate(mlp_head_units):
+      setattr(self, f'dense_class_{i}', layers.Dense(units, activation=tf.nn.gelu))
+      setattr(self, f'dropout_class_{i}', layers.Dropout(0.5))
+
     self.logits = layers.Dense(num_classes, name='logits')
-  
+
   def call(self, inputs, training=None):
+    inputs = self.data_augmentation(inputs)
     patches = self.patches(inputs)
     encoded_patches = self.patch_encoder(patches)
     for i in range(self.transformer_layers):
@@ -93,11 +112,16 @@ class VitModel(keras.Model):
       x3 = getattr(self, f'norm_add_{i}')(x2)
       x3 = getattr(self, f'mlp_{i}')(x3)
       encoded_patches = getattr(self, f'encoded_patchs_{i}')([x3, x2])
-    
+
     representation = self.representation(encoded_patches)
+    #representation = self.global_pooling(representation)
     representation = self.flatten(representation)
-    representation = self.drop_representation(representation, training=training)
-    features = self.features(representation)
+    features = self.drop_representation(representation, training=training)
+    
+    for i in range(self.len_hidden_units):
+      features = getattr(self, f'dense_class_{i}')(features)
+      features = getattr(self, f'dropout_class_{i}')(features, training=training)
+
     return self.logits(features)
 
   """Cumstom function for personal propurses"""	
@@ -105,7 +129,7 @@ class VitModel(keras.Model):
     x = layers.Input(shape=input_shape[1:], name='inputs')
     return tf.keras.Model(inputs=[x], outputs=self.call(x))
 
-  def vectorize(self, inputs, training=False, flatten=False):
+  def vectorize(self, inputs, training=False, flatten=True):
     patches = self.patches(inputs)
     encoded_patches = self.patch_encoder(patches)
     for i in range(self.num_heads):
@@ -117,5 +141,6 @@ class VitModel(keras.Model):
       encoded_patches = getattr(self, f'encoded_patchs_{i}')([x3, x2])
     representation = self.representation(encoded_patches)
     if flatten:
+      #representation = self.global_pooling(representation)
       representation = self.flatten(representation)
     return representation
