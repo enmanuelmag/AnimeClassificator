@@ -117,7 +117,7 @@ class VitModel(keras.Model):
     #representation = self.global_pooling(representation)
     representation = self.flatten(representation)
     features = self.drop_representation(representation, training=training)
-    
+
     for i in range(self.len_hidden_units):
       features = getattr(self, f'dense_class_{i}')(features)
       features = getattr(self, f'dropout_class_{i}')(features, training=training)
@@ -143,4 +143,5 @@ class VitModel(keras.Model):
     if flatten:
       #representation = self.global_pooling(representation)
       representation = self.flatten(representation)
+      #representation = self.drop_representation(representation)
     return representation
