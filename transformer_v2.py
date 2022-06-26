@@ -70,10 +70,13 @@ class VitModel(keras.Model):
     self.data_augmentation = keras.Sequential(
       [
         layers.Normalization(),
-        layers.RandomFlip("horizontal"),
-        layers.RandomRotation(factor=0.02),
+        layers.RandomFlip(),
         layers.RandomZoom(
           height_factor=0.2, width_factor=0.2
+        ),
+        layers.RandomRotation(
+          factor=0.02, interpolation='bilinear',
+          fill_mode='nearest'
         ),
       ],
       name="data_augmentation",
